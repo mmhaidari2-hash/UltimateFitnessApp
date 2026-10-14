@@ -20,7 +20,6 @@ jobs:
     env:
       CI: '1'
       EXPO_NO_TELEMETRY: '1'
-      VALIDATION_DIR: ${{ runner.temp }}/fitness-validation
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -32,6 +31,8 @@ jobs:
       - name: Install actual app source
         id: install
         run: |
+          export VALIDATION_DIR="$RUNNER_TEMP/fitness-validation"
+          echo "VALIDATION_DIR=$VALIDATION_DIR" >> "$GITHUB_ENV"
           mkdir -p "$VALIDATION_DIR"
           test -f App.tsx && test -f index.ts && test -f package-lock.json
           git rev-parse HEAD | tee "$VALIDATION_DIR/source-sha.txt"
