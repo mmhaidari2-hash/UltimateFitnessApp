@@ -144,6 +144,23 @@ SDK یا رفع دو ریشه را ثابت نمی‌کند. مانع امنیت
 `persist-credentials: false` بدون تغییر باقی ماند؛ نقص اجرایی جدیدی از
 runهای بدون job اثبات نشد.
 
+پس از ثبت گزارش در commit
+`33fa8dfc7ad7cf0ec574fdc850d8a2851b423aff`، اجرای PR #3
+[`38651131659`](https://github.com/mmhaidari2-hash/UltimateFitnessApp/actions/runs/38651131659)
+و اجرای push
+[`38651125270`](https://github.com/mmhaidari2-hash/UltimateFitnessApp/actions/runs/38651125270)
+نیز `action_required` با صفر job بودند؛ این پیگیری هم CI موفق ندارد.
+
+### بازبینی نهایی
+
+- اسکن اسرار روی هر ۱۴ فایل تغییرکرده/بازیابی‌شده: موردی پیدا نشد.
+- CodeQL روی `javascript` و `actions`: صفر alert؛ این جایگزین رفع advisoryهای npm نیست.
+- ابزار داخلی Code Review موجود نبود (`autofind binary not found`)؛ بنابراین
+  نتیجهٔ خالی آن «بازبینی موفق» تلقی نشد. بازبین مستقلِ جایگزین، diff نسبت
+  به SHA منبع PR #2 و شواهد فرمان‌ها را read-only بررسی کرد و ایراد مهمی نیافت.
+- بازبینی امنیتی مستقل نیز انجام شد؛ نتیجه و محدودیت‌هایش در بخش ممیزی بالا
+  ثبت است. تغییری در کد اجرایی نسبت به PR #2 وجود ندارد.
+
 **جمع‌بندی:** نصب، typecheck، export جاوااسکریپت iOS و smoke محدود sandbox
 انجام شد؛ دو بررسی آنلاین Expo، ۱۵ ورودی امنیتی و تأیید/اجرای واقعی Actions
 باز هستند. خروجی Hermes **IPA امضاشده یا build بومی Xcode نیست**.
