@@ -1,0 +1,112 @@
+name: App validation
+
+on:
+  pull_request:
+  push:
+    branches: [main, 'copilot/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ios-export:
+    name: Typecheck and iOS export
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    env:
+      CI: '1'
+      EXPO_NO_TELEMETRY: '1'
+      VALIDATION_DIR: ${{ runner.temp }}/fitness-validation
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install actual app source
+        id: install
+        run: |
+          mkdir -p "$VALIDATION_DIR"
+          test -f App.tsx && test -f index.ts && test -f package-lock.json
+          git rev-parse HEAD | tee "$VALIDATION_DIR/source-sha.txt"
+          node --version | tee "$VALIDATION_DIR/node-version.txt"
+          npm --version | tee "$VALIDATION_DIR/npm-version.txt"
+          npm ci --no-audit --no-fund 2>&1 | tee "$VALIDATION_DIR/install.log"
+      - name: Typecheck
+        id: typecheck
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run typecheck 2>&1 | tee "$VALIDATION_DIR/typecheck.log"
+      - name: Check Expo dependency versions
+        id: dependencies
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npx --no-install expo install --check 2>&1 | tee "$VALIDATION_DIR/expo-dependencies.log"
+      - name: Expo Doctor
+        id: doctor
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npx --yes expo-doctor@1.20.4 2>&1 | tee "$VALIDATION_DIR/expo-doctor.log"
+      - name: Export iOS JavaScript bundle
+        id: export
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npx --no-install expo export --platform ios --output-dir "$VALIDATION_DIR/ios-export" 2>&1 | tee "$VALIDATION_DIR/ios-export.log"
+      - name: Bounded localhost startup
+        id: smoke
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        timeout-minutes: 3
+        run: |
+          timeout --signal=TERM --kill-after=5s 120s \
+            npx --no-install expo start --localhost --port 8081 > "$VALIDATION_DIR/startup.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true; wait "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..45}; do
+            if curl --fail --silent --max-time 2 http://localhost:8081/status > "$VALIDATION_DIR/metro-status.txt"; then
+              break
+            fi
+            kill -0 "$server_pid"
+            sleep 2
+          done
+          grep -q 'packager-status:running' "$VALIDATION_DIR/metro-status.txt"
+          curl --fail --silent --show-error --max-time 20 \
+            -H 'expo-platform: ios' -H 'expo-protocol-version: 1' -H 'accept: application/expo+json' \
+            http://localhost:8081/ > "$VALIDATION_DIR/ios-manifest.json"
+          node -e 'const fs = require("node:fs"); const m = JSON.parse(fs.readFileSync(process.env.VALIDATION_DIR + "/ios-manifest.json", "utf8")); if (!m.launchAsset?.url || !m.extra?.expoClient) process.exit(1);'
+      - name: Dependency audit (advisory)
+        id: audit
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        continue-on-error: true
+        run: npm audit --json > "$VALIDATION_DIR/npm-audit.json"
+      - name: Job summary
+        if: always()
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<'SUMMARY'
+          ## Actual app validation
+          Source: `${{ github.sha }}` (this checkout, including the app from PR #1).
+
+          | Check | Result |
+          | --- | --- |
+          | Lockfile install | ${{ steps.install.outcome }} |
+          | TypeScript | ${{ steps.typecheck.outcome }} |
+          | Expo dependency compatibility | ${{ steps.dependencies.outcome }} |
+          | Expo Doctor (requires external services) | ${{ steps.doctor.outcome }} |
+          | iOS JavaScript/Hermes export | ${{ steps.export.outcome }} |
+          | Localhost Metro status and iOS manifest | ${{ steps.smoke.outcome }} |
+          | Dependency audit (advisory, see JSON) | ${{ steps.audit.outcome }} |
+
+          Logs and any generated iOS export are in the `app-validation` artifact.
+          An audit failure is a dependency-security warning, not a passing security check.
+          Export is **not** a signed IPA/native Xcode build, simulator/device test,
+          or public live preview. The temporary localhost server is stopped after the check.
+          SUMMARY
+      - name: Upload validation evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: app-validation
+          path: ${{ runner.temp }}/fitness-validation/
+          if-no-files-found: warn
+          retention-days: 7
