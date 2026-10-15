@@ -53,6 +53,17 @@ schema جاری SDK 57 از endpoint خود Expo Doctor درخواست شد، ا
 ناسازگار را دوباره بررسی می‌کند. اگر اجرای جدید `action_required` شد،
 نگه‌دارنده پس از بازبینی تغییرات **Approve and run workflows** را بزند؛
 نتیجهٔ jobها و artifact همان commit باید بررسی شود، نه نتایج sandbox.
+اصلاح در commit `ba12010f22820cc2ee114571cdf695962454bd40` ثبت شد.
+اجرای جدید PR #4، [`38696141204`](https://github.com/mmhaidari2-hash/UltimateFitnessApp/actions/runs/38696141204)،
+و push، [`38696135619`](https://github.com/mmhaidari2-hash/UltimateFitnessApp/actions/runs/38696135619)،
+روی این commit وضعیت `action_required` دارند؛ API برای اجرای PR صفر job
+و هیچ لاگ شکست‌خورده نشان داد. **این اجرای جدید نیازمند تأیید انسانی است**؛
+با اجرای شکست‌خوردهٔ تأییدشدهٔ PR #3 اشتباه نشود. ثبت بعدی این گزارش نیز
+commit جدیدی می‌سازد؛ آخرین head همین PR را برای اعتبارسنجی انتخاب کنید.
+اسکن اسرار هر ۱۴ فایل: موردی یافت نشد. CodeQL برای `javascript` و `actions`:
+صفر alert، نه رفع advisoryهای npm. ابزار Code Review به‌علت مدل ناموجود
+قابل اجرا نبود؛ بازبین مستقلِ فقط‌خواندنی diff نسبت به baseline PR #3
+را بررسی کرد و ایراد مهمی نیافت.
 این اصلاح به معنی CI سبز، رفع advisoryها یا آماده‌بودن روی گوشی نیست.
 هیچ تست iPhone/simulator، IPA، لینک زنده، tunnel، انتشار، استقرار یا
 استفاده از credential انجام نشده است.
