@@ -6,16 +6,16 @@
   <meta name="theme-color" content="#0d9488">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="UltimateFitness">
-  <link rel="manifest" href="/pwa/manifest.json">
-  <link rel="apple-touch-icon" href="/pwa/apple-touch-icon.svg">
-  <title>Ultimate Fitness App (PWA)</title>
-  <link rel="stylesheet" href="/pwa/styles.css">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.svg">
+  <title>Ultimate Fitness App</title>
+  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
   <main class="container">
-    <img src="/pwa/icon-192.svg" alt="logo" class="logo">
+    <img src="./icon-192.svg" alt="logo" class="logo">
     <h1>Ultimate Fitness</h1>
-    <p class="lead">نسخهٔ تستی وب‌اپ برای اضافه شدن به هوم اسکرین آیفون.</p>
+    <p class="lead">نسخهٔ تستی برای اضافه شدن به هوم‌اسکرین آیفون.</p>
 
     <div class="card">
       <h2>شروع تمرین</h2>
@@ -25,21 +25,21 @@
 
     <div class="card">
       <h2>تمرین امروز</h2>
-      <ul id="exList">
+      <ul>
         <li>اسکوات — 3 ست × 12 تکرار</li>
         <li>پوش‌آپ — 3 ست × 10 تکرار</li>
         <li>پلانک — 3 ست × 45 ثانیه</li>
       </ul>
     </div>
 
-    <p class="note">برای اضافه کردن به هوم‌اسکرین: Safari > Share > Add to Home Screen</p>
-    <p class="small">این یک نسخهٔ ساده است برای تست روی آیفون بدون نیاز به Xcode.</p>
+    <p class="note">برای اضافه کردن به هوم‌اسکرین: Safari &gt; Share &gt; Add to Home Screen</p>
+    <p class="small">نسخهٔ سادهٔ تست برای iPhone</p>
   </main>
 
-  <script src="/pwa/app.js"></script>
+  <script src="./app.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/pwa/sw.js').catch(function(err){
+      navigator.serviceWorker.register('./sw.js').catch(function(err){
         console.log('SW register failed:', err);
       });
     }
